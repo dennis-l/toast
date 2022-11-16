@@ -340,7 +340,7 @@ class PixelsWCS(Operator):
             self._done_auto = True
 
         if self._local_submaps is None and self.create_dist is not None:
-            self._local_submaps = np.zeros(self.submaps, dtype=np.bool)
+            self._local_submaps = np.zeros(self.submaps, dtype=np.uint8)
 
         # Expand detector pointing
         if self.quats is not None:

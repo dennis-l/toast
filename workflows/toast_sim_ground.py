@@ -362,6 +362,11 @@ def simulate_data(args, job, toast_comm, telescope, schedule):
 
     select_pointing(job, args)
 
+    log.info_rank(f"Solver pixelization = {job.pixels_solve.name}", comm=world_comm)
+    log.info_rank(f"Solver weights = {job.weights_solve.name}", comm=world_comm)
+    log.info_rank(f"Final pixelization = {job.pixels_final.name}", comm=world_comm)
+    log.info_rank(f"Final weights = {job.weights_final.name}", comm=world_comm)
+
     if args.pwv_limit is not None:
         iobs = 0
         ngood = 0
@@ -539,7 +544,7 @@ def reduce_data(job, args, data):
     # Optional geometric factors
 
     ops.cadence_map.pixel_pointing = job.pixels_final
-    ops.cadence_map.pixel_dist = job.binner_final.pixel_dist
+    ops.cadence_map.pixel_dist = ops.binner_final.pixel_dist
     ops.cadence_map.output_dir = args.out_dir
     ops.cadence_map.apply(data)
     log.info_rank("  Calculated cadence map in", comm=world_comm, timer=timer)
@@ -806,14 +811,14 @@ def main():
         toast.ops.PixelsHealpix(name="pixels_healpix_radec"),
         toast.ops.PixelsWCS(
             name="pixels_wcs_radec",
-            project="CAR",
+            projection="CAR",
             resolution=(0.005 * u.degree, 0.005 * u.degree),
             auto_bounds=True,
             enabled=False,
         ),
         toast.ops.PixelsWCS(
             name="pixels_wcs_azel",
-            project="CAR",
+            projection="CAR",
             resolution=(0.005 * u.degree, 0.005 * u.degree),
             auto_bounds=True,
             enabled=False,
