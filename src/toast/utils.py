@@ -498,7 +498,7 @@ def ensure_buffer_f64(data):
     #     return np.ascontiguousarray(data, dtype=np.float64)
 
 
-def name_UID(name):
+def name_UID(name, int64=False):
     """Return a unique integer for a specified name string."""
     bdet = name.encode("utf-8")
     dhash = hashlib.md5()
@@ -507,7 +507,10 @@ def name_UID(name):
     uid = None
     try:
         ind = int.from_bytes(bdet, byteorder="little")
-        uid = int(ind & 0xFFFFFFFF)
+        if int64:
+            uid = int(ind & 0x7FFFFFFFFFFFFFFF)
+        else:
+            uid = int(ind & 0x7FFFFFFF)
     except:
         raise RuntimeError(
             "Cannot convert detector name {} to a unique integer-\
