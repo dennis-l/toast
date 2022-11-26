@@ -60,7 +60,7 @@ jobs:
         run: |
           docker run -e OMP_NUM_THREADS=2 \
             test_runner:py${{ matrix.pyshort }} \
-            mpirun -np 2 python -c 'import toast.tests; toast.tests.run()'
+            mpirun -np 2 python -m mpi4py -c 'import toast.tests; toast.tests.run()'
 
   macos:
     name: MacOS with Python-${{ matrix.python }}

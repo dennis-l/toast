@@ -533,7 +533,7 @@ def exception_guard(comm=None):
                 # gives other processes a bit of time to see whether
                 # they encounter the same error
                 time.sleep(30)
-            comm.Abort()
+            comm.Abort(1)
 
 
 def comm_equal(comm_a, comm_b):
