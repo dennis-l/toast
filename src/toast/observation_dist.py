@@ -795,7 +795,13 @@ def redistribute_shared_data(
 
 
 def redistribute_data(
-    old_dist, new_dist, shared_manager, detdata_manager, intervals_manager, times=None
+    old_dist,
+    new_dist,
+    shared_manager,
+    detdata_manager,
+    intervals_manager,
+    times=None,
+    dbg=None,
 ):
     """Helper function to redistribute data in an observation.
 
@@ -850,6 +856,10 @@ def redistribute_data(
     new_samp_off = new_dist.samps[new_dist.comm.group_rank].offset
     new_samp_n = new_dist.samps[new_dist.comm.group_rank].n_elem
     samp_recv_info = compute_1d_offsets(new_samp_off, new_samp_n, old_dist.samps)
+
+    print(
+        f"DBG {dbg} OBS REDIST {old_dist.comm.world_rank}:  det_send = {det_send_info} samp_send = {samp_send_info} det_recv = {det_recv_info} samp_recv = {samp_recv_info}"
+    )
 
     # Redistribute detector data.
 
