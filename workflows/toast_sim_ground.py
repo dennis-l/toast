@@ -455,8 +455,8 @@ def reduce_data(job, args, data):
 
     # Load and apply processing mask
 
-    ops.processing_mask.pixel_pointing = ops.pixels_radec_final
-    ops.processing_mask.pixel_dist = ops.binner_final.pixel_dist
+    ops.processing_mask.pixel_pointing = ops.pixels_radec
+    ops.processing_mask.pixel_dist = ops.binner.pixel_dist
     ops.processing_mask.apply(data)
     log.info_rank("  Raised processing flags in", comm=world_comm, timer=timer)
 
@@ -739,7 +739,7 @@ def main():
         toast.ops.PixelsHealpix(name="pixels_radec"),
         toast.ops.StokesWeights(name="weights_radec", mode="IQU"),
         toast.ops.YieldCut(name="yield_cut", enabled=False),
-        toast.ops.ScanHealpixMask(name="processing_mask", enabled=False)
+        toast.ops.ScanHealpixMask(name="processing_mask", enabled=False),
         toast.ops.FlagSSO(name="flag_sso", enabled=False),
         toast.ops.CadenceMap(name="cadence_map", enabled=False),
         toast.ops.CrossLinking(name="crosslinking", enabled=False),
