@@ -627,25 +627,39 @@ class FlagNoiseFit(Operator):
             local_fknee = np.array(local_fknee, dtype=np.float64)
             net_mean = None
             net_std = None
+            net_median = None
+            net_mad = None
             fknee_mean = None
             fknee_std = None
+            fknee_median = None
+            fknee_mad = None
             good_fit = local_net > 0.0
             if obs.comm_col is None:
                 all_net = np.array(local_net[good_fit])
                 net_mean = np.mean(all_net)
                 net_std = np.std(all_net)
+                net_median = np.median(all_net)
+                net_mad    = np.median(np.absolute(all_net - net_median))
                 if self.sigma_fknee is not None:
                     all_fknee = np.array(local_fknee[good_fit])
                     fknee_mean = np.mean(all_fknee)
                     fknee_std = np.std(all_fknee)
+                    fknee_median = np.median(all_fknee)
+                    fknee_mad    = np.median(np.absolute(all_fknee - fknee_median))
             else:
                 all_net = obs.comm_col.gather(local_net[good_fit], root=0)
                 if obs.comm_col_rank == 0:
                     all_net = np.array([val for plist in all_net for val in plist])
                     net_mean = np.mean(all_net)
                     net_std = np.std(all_net)
+                    net_median = np.median(all_net)
+                    net_mad    = np.median(np.absolute(all_net - net_median))
+
                 net_mean = obs.comm_col.bcast(net_mean, root=0)
                 net_std = obs.comm_col.bcast(net_std, root=0)
+                net_median = obs.comm_col.bcast(net_median, root=0)
+                net_mad = obs.comm_col.bcast(net_mad, root=0) 
+
                 if self.sigma_fknee is not None:
                     all_fknee = obs.comm_col.gather(local_fknee[good_fit], root=0)
                     if obs.comm_col_rank == 0:
@@ -654,8 +668,12 @@ class FlagNoiseFit(Operator):
                         )
                         fknee_mean = np.mean(all_fknee)
                         fknee_std = np.std(all_fknee)
+                        fknee_median = np.median(all_fknee)
+                        fknee_mad    = np.median(np.absolute(all_fknee - fknee_median))
                     fknee_mean = obs.comm_col.bcast(fknee_mean, root=0)
                     fknee_std = obs.comm_col.bcast(fknee_std, root=0)
+                    fknee_median = obs.comm_col.bcast(fknee_median, root=0)
+                    fknee_mad = obs.comm_col.bcast(fknee_mad, root=0) 
 
             # Flag outlier detectors
 
@@ -686,6 +704,25 @@ class FlagNoiseFit(Operator):
                         log.info(msg)
                         obs.detdata[self.det_flags][det, :] |= self.det_flag_mask
                         new_flags[det] = self.det_flag_mask
+                # similar check but for the median NET?
+                if np.absolute(local_net[idet] - net_median) > net_mad * self.sigma_NET:
+                    msg = f"obs {obs.name}, det {det} has NET {local_net[idet]} "
+                    msg += f" that is > {self.sigma_NET} x {net_mad} from {net_median}"
+                    log.info(msg)
+                    obs.detdata[self.det_flags][det, :] |= self.det_flag_mask
+                    new_flags[det] = self.det_flag_mask   
+                # similar check but for the median fknee?
+                if self.sigma_fknee is not None:
+                    if (
+                        np.absolute(local_fknee[idet] - fknee_median)
+                        > fknee_mad * self.sigma_fknee
+                    ):
+                        msg = f"obs {obs.name}, det {det} has fknee "
+                        msg += f"{local_fknee[idet]} that is > {self.sigma_fknee} "
+                        msg += f"x {fknee_mad} from {fknee_median}"
+                        log.info(msg)
+                        obs.detdata[self.det_flags][det, :] |= self.det_flag_mask
+                        new_flags[det] = self.det_flag_mask         
             obs.update_local_detector_flags(new_flags)
 
     def _finalize(self, data, **kwargs):
